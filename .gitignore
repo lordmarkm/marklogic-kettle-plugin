@@ -1,12 +1,32 @@
-*.class
+# generated files
+bin
+target
+webapp-build
+generated
+overlays
+id_file
+selenium_standalone_*
+*.log
+lib
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# dev folders
+activemq-data
+logs
+**/solr_home_*/*/data
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# Eclipse Ignores
+.classpath
+.project
+.settings
+.metadata
+.checkstyle
+*.eclipse.jdt.core.prefs
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+# IDEA Ignores
+*.iml
+*.ipr
+*.iws
+.idea
+
+# MAC ignores
+.DS_Store
