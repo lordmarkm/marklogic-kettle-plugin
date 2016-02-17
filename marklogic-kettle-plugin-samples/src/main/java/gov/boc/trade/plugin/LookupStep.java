@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.Properties;
 
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettleStepException;
+import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
@@ -50,7 +50,27 @@ public class LookupStep extends BaseStep implements StepInterface {
 
 
         System.out.println("Getting data from marklogic");
-        getData(data.marklogicOdbcConnection);
+        ResultSet rs = getData(data.marklogicOdbcConnection);
+
+        System.out.println("Reading marklogic result set");
+        try {
+            while (rs.next()) {
+                // generate output row, make it correct size
+                Object[] outputRow = RowDataUtil.resizeArray(r, data.outputRowMeta.size());
+                outputRow[0] = rs.getString("employee_uri");
+                outputRow[1] = rs.getString("employee_collection");
+                outputRow[2] = rs.getLong("employee_id");
+                outputRow[3] = rs.getString("employee_name");
+                outputRow[4] = rs.getString("employee_role");
+                outputRow[5] = rs.getString("employee_operatorcode");
+
+                // copy row to possible alternate rowset(s)
+                putRow(data.outputRowMeta, outputRow); 
+            }
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         // Some basic logging
         if (checkFeedback(getLinesRead())) {
@@ -99,37 +119,13 @@ public class LookupStep extends BaseStep implements StepInterface {
         return conn;
     }
 
-    private Object[] getData(Connection con) {
+    private ResultSet getData(Connection con) {
         Statement stmt = null;
         String query = "select * from employees";
         try {
             stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
-            System.out.println("Reading marklogic result set");
-            try {
-                while (rs.next()) {
-                    // generate output row, make it correct size
-                    Object[] outputRow = new Object[data.outputRowMeta.size()];
-                    outputRow[0] = rs.getString("employee_uri");
-                    outputRow[1] = rs.getString("employee_collection");
-                    outputRow[2] = rs.getLong("employee_id");
-                    outputRow[3] = rs.getString("employee_name");
-                    outputRow[4] = rs.getString("employee_role");
-                    outputRow[5] = rs.getString("employee_operatorcode");
-
-                    System.out.println("Got output row: " + outputRow);
-                    // copy row to possible alternate rowset(s)
-                    try {
-                        putRow(data.outputRowMeta, outputRow);
-                    } catch (KettleStepException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } 
-                }
-            } catch (SQLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            return rs;
         } catch (SQLException e ) {
             e.printStackTrace();
         } finally {
