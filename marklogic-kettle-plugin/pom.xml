@@ -7,13 +7,6 @@
   <name>Marklogic XDBC Connector Kettle Plugin</name>
 
   <dependencies>
-    <!-- Marklogic dependencies -->
-    <dependency>
-      <groupId>com.marklogic</groupId>
-      <artifactId>client-api-java</artifactId>
-      <version>1.0-1</version>
-    </dependency>
-
     <!-- Kettle dependencies, probably provided by kettle lib folders -->
     <dependency>
       <groupId>pentaho-kettle</groupId>
@@ -46,12 +39,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Temporary dependencies -->
-    <dependency>
-      <groupId>com.jcabi</groupId>
-      <artifactId>jcabi-xml</artifactId>
-      <version>0.14</version>
-    </dependency>
   </dependencies>
 
   <repositories>

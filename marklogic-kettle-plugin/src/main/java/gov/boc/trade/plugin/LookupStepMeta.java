@@ -43,8 +43,10 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     private String marklogicOdbcName;
     private String viewName;
+    private String username;
+    private String password;
     private String[] outputField;
-    private int[] outputType;   
+    private int[] outputType;
 
     public LookupStepMeta() {
         super(); 
@@ -55,6 +57,8 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
     public void setDefault() {
         marklogicOdbcName = "MarkLogicSQL";
         viewName = "import_items";
+        username = "username";
+        password = "password";
 
         // default is to have no key lookup settings
         allocate(0);
@@ -100,6 +104,8 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         StringBuffer retval = new StringBuffer(150);
         retval.append("    ").append(XMLHandler.addTagValue("marklogicOdbcName", marklogicOdbcName));
         retval.append("    ").append(XMLHandler.addTagValue("viewName", viewName));
+        retval.append("    ").append(XMLHandler.addTagValue("username", username));
+        retval.append("    ").append(XMLHandler.addTagValue("password", password));
         for (int i=0;i<outputField.length;i++) {
             retval.append("      <lookup>").append(Const.CR);
             retval.append("        ").append(XMLHandler.addTagValue("outfield", outputField[i]));
@@ -118,6 +124,9 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         try {
             marklogicOdbcName = XMLHandler.getTagValue(stepnode, "marklogicOdbcName");
             viewName = XMLHandler.getTagValue(stepnode, "viewName");
+            username = XMLHandler.getTagValue(stepnode, "username");
+            password = XMLHandler.getTagValue(stepnode, "password");
+
             int nrKeys = XMLHandler.countNodes(stepnode, "lookup"); 
             allocate(nrKeys);
 
@@ -143,6 +152,8 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         try {
             marklogicOdbcName = rep.getStepAttributeString(id_step, "marklogicOdbcName");
             viewName = rep.getStepAttributeString(id_step, "viewName");
+            username = rep.getStepAttributeString(id_step, "username");
+            password = rep.getStepAttributeString(id_step, "password");
 
             int nrKeys   = rep.countNrStepAttributes(id_step, "lookup_outfield");
             allocate(nrKeys);
@@ -162,6 +173,8 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         try {
             rep.saveStepAttribute(id_transformation, id_step, "marklogicOdbcName", marklogicOdbcName);
             rep.saveStepAttribute(id_transformation, id_step, "viewName", viewName);
+            rep.saveStepAttribute(id_transformation, id_step, "username", username);
+            rep.saveStepAttribute(id_transformation, id_step, "password", password);
 
             for (int i=0;i<outputField.length;i++) {
                 rep.saveStepAttribute(id_transformation, id_step, i, "lookup_outfield", outputField[i]);
@@ -220,6 +233,22 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     public void setViewName(String viewName) {
         this.viewName = viewName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
 }

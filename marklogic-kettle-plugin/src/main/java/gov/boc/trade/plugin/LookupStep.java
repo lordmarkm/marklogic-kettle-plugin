@@ -12,6 +12,7 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -27,71 +28,63 @@ import org.pentaho.di.trans.step.StepMetaInterface;
  */
 public class LookupStep extends BaseStep implements StepInterface {
 
-    private LookupStepData data;
-    private LookupStepMeta meta;
-
-    private static Class<?> PKG = LookupStep.class; // for i18n purposes
-
     public LookupStep(StepMeta s, StepDataInterface stepDataInterface, int c, TransMeta t, Trans dis) {
         super(s, stepDataInterface, c, t, dis);
     }
 
-    public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
-
-        meta = (LookupStepMeta) smi;
-        data = (LookupStepData) sdi;
-
-        Object[] r = getRow(); // get row, blocks when needed!
-        if (r == null) // no more input to be expected...
-        {
-            setOutputDone();
-            return false;
-        }
-
-
-        System.out.println("Getting data from marklogic");
-        getData(data.marklogicOdbcConnection);
-
-        // Some basic logging
-        if (checkFeedback(getLinesRead())) {
-            if (log.isBasic()) logBasic("Linenr " + getLinesRead()); 
-        }
-
-        return true;
-    }
-
+    @Override
     public boolean init(StepMetaInterface smi, StepDataInterface sdi) {
-        meta = (LookupStepMeta) smi;
-        data = (LookupStepData) sdi;
+        LookupStepMeta meta = (LookupStepMeta) smi;
+        LookupStepData data = (LookupStepData) sdi;
 
         //get an odbc connection
-        Connection conn = getConnection();
+        Connection conn = getConnection(meta);
         data.marklogicOdbcConnection = conn;
 
         System.out.println("Preparing output row meta");
+
         RowMetaInterface outputRowMeta = new RowMeta();
-        outputRowMeta.addValueMeta(new ValueMeta("employee_uri", ValueMeta.TYPE_STRING));
-        outputRowMeta.addValueMeta(new ValueMeta("employee_collection", ValueMeta.TYPE_STRING));
-        outputRowMeta.addValueMeta(new ValueMeta("employee_id", ValueMeta.TYPE_STRING));
-        outputRowMeta.addValueMeta(new ValueMeta("employee_name", ValueMeta.TYPE_STRING));
-        outputRowMeta.addValueMeta(new ValueMeta("employee_role", ValueMeta.TYPE_STRING));
-        outputRowMeta.addValueMeta(new ValueMeta("employee_operatorcode", ValueMeta.TYPE_STRING));
+        String[] outputFields = meta.getOutputField();
+        int[] outputTypes = meta.getOutputType();
+        for (int i = 0; i < outputFields.length; i++) {
+            String outputFieldName = outputFields[i];
+            int outputType = outputTypes[i];
+            outputRowMeta.addValueMeta(new ValueMeta(outputFieldName, outputType));
+        }
         data.outputRowMeta = outputRowMeta;
 
         return super.init(smi, sdi);
     }
 
-    private Connection getConnection() {
+    @Override
+    public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
+
+        LookupStepMeta meta = (LookupStepMeta) smi;
+        LookupStepData data = (LookupStepData) sdi;
+
+        Object[] r = getRow(); // get row, blocks when needed!
+        if (r == null) {
+            // no more input to be expected...
+            setOutputDone();
+            return false;
+        }
+
+        System.out.println("Getting data from marklogic");
+        getRows(meta, data);
+
+        return true;
+    }
+
+    private Connection getConnection(LookupStepMeta meta) {
         Connection conn = null;
         Properties connectionProps = new Properties();
-        connectionProps.put("user", "root");
-        connectionProps.put("password", "root");
+        connectionProps.put("user", meta.getUsername());
+        connectionProps.put("password", meta.getPassword());
 
         try {
-            conn = DriverManager.getConnection("jdbc:odbc:MarkLogicSQL", connectionProps);
+            conn = DriverManager.getConnection("jdbc:odbc:" + meta.getMarklogicOdbcName(), connectionProps);
         } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException("Unable to connect to database.", e);
         }
 
         System.out.println("Connected to database");
@@ -99,9 +92,11 @@ public class LookupStep extends BaseStep implements StepInterface {
         return conn;
     }
 
-    private Object[] getData(Connection con) {
+    private void getRows(LookupStepMeta meta, LookupStepData data) {
+        Connection con = data.marklogicOdbcConnection;
         Statement stmt = null;
-        String query = "select * from employees";
+        String query = "select * from " + meta.getViewName();
+        System.out.println("Executing query: " + query);
         try {
             stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
@@ -110,24 +105,18 @@ public class LookupStep extends BaseStep implements StepInterface {
                 while (rs.next()) {
                     // generate output row, make it correct size
                     Object[] outputRow = new Object[data.outputRowMeta.size()];
-                    outputRow[0] = rs.getString("employee_uri");
-                    outputRow[1] = rs.getString("employee_collection");
-                    outputRow[2] = rs.getLong("employee_id");
-                    outputRow[3] = rs.getString("employee_name");
-                    outputRow[4] = rs.getString("employee_role");
-                    outputRow[5] = rs.getString("employee_operatorcode");
+                    for (int i = 0; i < data.outputRowMeta.size(); i++) {
+                        insertData(outputRow, i, data.outputRowMeta, rs);
+                    }
 
-                    System.out.println("Got output row: " + outputRow);
                     // copy row to possible alternate rowset(s)
                     try {
                         putRow(data.outputRowMeta, outputRow);
                     } catch (KettleStepException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     } 
                 }
             } catch (SQLException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         } catch (SQLException e ) {
@@ -136,21 +125,49 @@ public class LookupStep extends BaseStep implements StepInterface {
             if (stmt != null) { try {
                 stmt.close();
             } catch (SQLException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } }
         }
-        return null;
     }
 
+    private void insertData(Object[] outputRow, int index, RowMetaInterface rowMeta, ResultSet rs) throws SQLException {
+        ValueMetaInterface vmi = rowMeta.getValueMeta(index);
+        String rowName = vmi.getName();
+        int type = vmi.getType();
+        System.out.println("Processing row. name=" + vmi.getName() + ", type=" + type);
+        Object data = null;
+
+        switch (type) {
+        case ValueMeta.TYPE_STRING:
+            data = rs.getString(rowName);
+            break;
+        case ValueMeta.TYPE_BIGNUMBER:
+            data = rs.getFloat(rowName);
+            break;
+        case ValueMeta.TYPE_INTEGER:
+            data = rs.getLong(rowName);
+            break;
+        case ValueMeta.TYPE_BOOLEAN:
+            data = rs.getBoolean(rowName);
+            break;
+        case ValueMeta.TYPE_DATE:
+            data = rs.getDate(rowName);
+            break;
+        }
+
+        if (null != data) {
+            outputRow[index] = data;
+        }
+    }
+
+    @Override
     public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
-        meta = (LookupStepMeta) smi;
-        data = (LookupStepData) sdi;
+        //LookupStepMeta meta = (LookupStepMeta) smi;
+        LookupStepData data = (LookupStepData) sdi;
 
         try {
             data.marklogicOdbcConnection.close();
         } catch (SQLException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 

@@ -7,6 +7,11 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.step.BaseStepData;
 import org.pentaho.di.trans.step.StepDataInterface;
 
+/**
+ * 
+ * @author Mark Martinez, created Feb 17, 2016
+ *
+ */
 public class LookupStepData extends BaseStepData implements StepDataInterface {
 
     public RowMetaInterface outputRowMeta;

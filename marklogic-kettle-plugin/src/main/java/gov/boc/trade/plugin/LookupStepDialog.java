@@ -31,6 +31,11 @@ import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
+/**
+ * 
+ * @author Mark Martinez, created Feb 17, 2016
+ *
+ */
 public class LookupStepDialog extends BaseStepDialog implements StepDialogInterface {
 
     private static Class<?> PKG = LookupStepMeta.class; // for i18n purposes
@@ -42,6 +47,10 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
     private TextVar wMarkLogicOdbcName;
     private Label wlMarkLogicViewName;
     private TextVar wMarkLogicViewName;
+    private Label wlMarkLogicUserName;
+    private TextVar wMarkLogicUserName;
+    private Label wlMarkLogicPassword;
+    private TextVar wMarkLogicPassword;
 
     // lookup fields settings widgets
     private Label wlKeys;
@@ -153,6 +162,44 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         fdViewName.right = new FormAttachment(100, 0);
         wMarkLogicViewName.setLayoutData(fdViewName);
 
+        //Username
+        wlMarkLogicUserName = new Label(gConnect, SWT.RIGHT);
+        wlMarkLogicUserName.setText("Username"); 
+        props.setLook(wlMarkLogicUserName);
+        FormData fdlMarkLogicUsername = new FormData();
+        fdlMarkLogicUsername.top = new FormAttachment(wMarkLogicViewName, margin);
+        fdlMarkLogicUsername.left = new FormAttachment(0, 0);
+        fdlMarkLogicUsername.right = new FormAttachment(middle, -margin);
+        wlMarkLogicUserName.setLayoutData(fdlMarkLogicUsername);
+        wMarkLogicUserName = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+        wMarkLogicUserName.addModifyListener(lsMod);
+        wMarkLogicUserName.setToolTipText("Username"); 
+        props.setLook(wMarkLogicViewName);
+        FormData fdUsername = new FormData();
+        fdUsername.top = new FormAttachment(wMarkLogicViewName, margin);
+        fdUsername.left = new FormAttachment(middle, 0);
+        fdUsername.right = new FormAttachment(100, 0);
+        wMarkLogicUserName.setLayoutData(fdUsername);
+
+        //Password
+        wlMarkLogicPassword = new Label(gConnect, SWT.RIGHT);
+        wlMarkLogicPassword.setText("Password"); 
+        props.setLook(wlMarkLogicPassword);
+        FormData fdlPassword = new FormData();
+        fdlPassword.top = new FormAttachment(wMarkLogicUserName, margin);
+        fdlPassword.left = new FormAttachment(0, 0);
+        fdlPassword.right = new FormAttachment(middle, -margin);
+        wlMarkLogicPassword.setLayoutData(fdlPassword);
+        wMarkLogicPassword = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+        wMarkLogicPassword.addModifyListener(lsMod);
+        wMarkLogicPassword.setToolTipText("Password"); 
+        props.setLook(wMarkLogicPassword);
+        FormData fdPassword = new FormData();
+        fdPassword.top = new FormAttachment(wMarkLogicUserName, margin);
+        fdPassword.left = new FormAttachment(middle, 0);
+        fdPassword.right = new FormAttachment(100, 0);
+        wMarkLogicPassword.setLayoutData(fdPassword);
+
         FormData fdConnect = new FormData();
         fdConnect.left = new FormAttachment(0, 0);
         fdConnect.right = new FormAttachment(100, 0);
@@ -233,6 +280,8 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         wStepname.addSelectionListener(lsDef);
         wMarkLogicOdbcName.addSelectionListener(lsDef);
         wMarkLogicViewName.addSelectionListener(lsDef);
+        wMarkLogicUserName.addSelectionListener(lsDef);
+        wMarkLogicPassword.addSelectionListener(lsDef);
 
         // Detect X or ALT-F4 or something that kills this window...
         shell.addShellListener(new ShellAdapter() {
@@ -273,6 +322,12 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         if (input.getViewName() != null) {
             wMarkLogicViewName.setText(input.getViewName());
         }
+        if (input.getUsername() != null) {
+            wMarkLogicUserName.setText(input.getUsername());
+        }
+        if (input.getPassword() != null) {
+            wMarkLogicPassword.setText(input.getPassword());
+        }
 
         if (input.getOutputField()!=null){
 
@@ -306,6 +361,8 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
 
         input.setMarklogicOdbcName(wMarkLogicOdbcName.getText());
         input.setViewName(wMarkLogicViewName.getText());
+        input.setUsername(wMarkLogicUserName.getText());
+        input.setPassword(wMarkLogicPassword.getText());
 
         int nrKeys= wKeys.nrNonEmpty();
 
