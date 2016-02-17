@@ -1,7 +1,5 @@
 package gov.boc.trade.plugin;
 
-import java.util.Arrays;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -22,19 +20,16 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.BaseStepMeta;
+import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
-import org.pentaho.di.trans.step.BaseStepMeta;
-import org.pentaho.di.trans.step.StepDialogInterface;
 
 public class LookupStepDialog extends BaseStepDialog implements StepDialogInterface {
 
@@ -43,20 +38,14 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
     private LookupStepMeta input;
 
     // connection settings widgets
-    private Label wlVoldemortHost;
-    private TextVar wVoldemortHost;
-    private Label wlVoldemortPort;
-    private TextVar wVoldemortPort;
+    private Label wlMarkLogicOdbcName;
+    private TextVar wMarkLogicOdbcName;
+    private Label wlMarkLogicViewName;
+    private TextVar wMarkLogicViewName;
 
     // lookup fields settings widgets
     private Label wlKeys;
     private TableView wKeys;
-
-    // all fields from the previous steps, used for dropdown selection
-    private RowMetaInterface prevFields = null;
-
-    // the dropdown column which should contain previous fields from stream
-    private ColumnInfo fieldColumn = null; 
 
     // constructor
     public LookupStepDialog(Shell parent, Object in, TransMeta transMeta, String sname) {
@@ -85,7 +74,7 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         formLayout.marginHeight = Const.FORM_MARGIN;
 
         shell.setLayout(formLayout);
-        shell.setText(BaseMessages.getString(PKG, "VoldemortDialog.Shell.Title")); 
+        shell.setText("MarkLogic ODBC Lookup"); 
 
         int middle = props.getMiddlePct();
         int margin = Const.MARGIN;
@@ -119,7 +108,7 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
          *************************************************/
 
         Group gConnect = new Group(shell, SWT.SHADOW_ETCHED_IN);
-        gConnect.setText(BaseMessages.getString(PKG, "VoldemortDialog.ConnectGroup.Label")); 
+        gConnect.setText("MarkLogic OBDC Connection information"); 
         FormLayout gConnectLayout = new FormLayout();
         gConnectLayout.marginWidth = 3;
         gConnectLayout.marginHeight = 3;
@@ -127,42 +116,42 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         props.setLook(gConnect);
 
         // Voldemort Host
-        wlVoldemortHost = new Label(gConnect, SWT.RIGHT);
-        wlVoldemortHost.setText(BaseMessages.getString(PKG, "VoldemortDialog.Host.Label")); 
-        props.setLook(wlVoldemortHost);
+        wlMarkLogicOdbcName = new Label(gConnect, SWT.RIGHT);
+        wlMarkLogicOdbcName.setText("MarkLogic ODBC name"); 
+        props.setLook(wlMarkLogicOdbcName);
         FormData fdlVoldemortHost = new FormData();
         fdlVoldemortHost.top = new FormAttachment(0, margin);
         fdlVoldemortHost.left = new FormAttachment(0, 0);
         fdlVoldemortHost.right = new FormAttachment(middle, -margin);
-        wlVoldemortHost.setLayoutData(fdlVoldemortHost);
-        wVoldemortHost = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-        wVoldemortHost.addModifyListener(lsMod);
-        wVoldemortHost.setToolTipText(BaseMessages.getString(PKG, "VoldemortDialog.Host.Tooltip")); 
-        props.setLook(wVoldemortHost);
-        FormData fdVoldemortHost = new FormData();
-        fdVoldemortHost.top = new FormAttachment(0, margin);
-        fdVoldemortHost.left = new FormAttachment(middle, 0);
-        fdVoldemortHost.right = new FormAttachment(100, 0);
-        wVoldemortHost.setLayoutData(fdVoldemortHost);
+        wlMarkLogicOdbcName.setLayoutData(fdlVoldemortHost);
+        wMarkLogicOdbcName = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+        wMarkLogicOdbcName.addModifyListener(lsMod);
+        wMarkLogicOdbcName.setToolTipText("MarkLogic ODBC name"); 
+        props.setLook(wMarkLogicOdbcName);
+        FormData fdOdbcName = new FormData();
+        fdOdbcName.top = new FormAttachment(0, margin);
+        fdOdbcName.left = new FormAttachment(middle, 0);
+        fdOdbcName.right = new FormAttachment(100, 0);
+        wMarkLogicOdbcName.setLayoutData(fdOdbcName);
 
         // Voldemort Port
-        wlVoldemortPort = new Label(gConnect, SWT.RIGHT);
-        wlVoldemortPort.setText(BaseMessages.getString(PKG, "VoldemortDialog.Port.Label")); 
-        props.setLook(wlVoldemortPort);
+        wlMarkLogicViewName = new Label(gConnect, SWT.RIGHT);
+        wlMarkLogicViewName.setText("View name"); 
+        props.setLook(wlMarkLogicViewName);
         FormData fdlVoldemortPassword = new FormData();
-        fdlVoldemortPassword.top = new FormAttachment(wVoldemortHost, margin);
+        fdlVoldemortPassword.top = new FormAttachment(wMarkLogicOdbcName, margin);
         fdlVoldemortPassword.left = new FormAttachment(0, 0);
         fdlVoldemortPassword.right = new FormAttachment(middle, -margin);
-        wlVoldemortPort.setLayoutData(fdlVoldemortPassword);
-        wVoldemortPort = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-        wVoldemortPort.addModifyListener(lsMod);
-        wVoldemortPort.setToolTipText(BaseMessages.getString(PKG, "VoldemortDialog.Port.Tooltip")); 
-        props.setLook(wVoldemortPort);
-        FormData fdVoldemortPassword = new FormData();
-        fdVoldemortPassword.top = new FormAttachment(wVoldemortHost, margin);
-        fdVoldemortPassword.left = new FormAttachment(middle, 0);
-        fdVoldemortPassword.right = new FormAttachment(100, 0);
-        wVoldemortPort.setLayoutData(fdVoldemortPassword);
+        wlMarkLogicViewName.setLayoutData(fdlVoldemortPassword);
+        wMarkLogicViewName = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+        wMarkLogicViewName.addModifyListener(lsMod);
+        wMarkLogicViewName.setToolTipText("View name"); 
+        props.setLook(wMarkLogicViewName);
+        FormData fdViewName = new FormData();
+        fdViewName.top = new FormAttachment(wMarkLogicOdbcName, margin);
+        fdViewName.left = new FormAttachment(middle, 0);
+        fdViewName.right = new FormAttachment(100, 0);
+        wMarkLogicViewName.setLayoutData(fdViewName);
 
         FormData fdConnect = new FormData();
         fdConnect.left = new FormAttachment(0, 0);
@@ -175,29 +164,19 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
          *************************************************/
 
         wlKeys=new Label(shell, SWT.NONE);
-        wlKeys.setText(BaseMessages.getString(PKG, "VoldemortDialog.Return.Label")); 
+        wlKeys.setText("Fields to retrieve"); 
         props.setLook(wlKeys);
         FormData fdlReturn=new FormData();
         fdlReturn.left  = new FormAttachment(0, 0);
         fdlReturn.top   = new FormAttachment(gConnect, margin);
         wlKeys.setLayoutData(fdlReturn);
 
-        int keyWidgetCols=3;
-        int keyWidgetRows= (input.getKeyField()!=null?input.getKeyField().length:1);
+        int keyWidgetCols=2;
+        int keyWidgetRows= (input.getOutputField()!=null?input.getOutputField().length:1);
 
         ColumnInfo[] ciKeys=new ColumnInfo[keyWidgetCols];
-        ciKeys[0]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.KeyField"),    ColumnInfo.COLUMN_TYPE_CCOMBO,  new String[]{}, false); 
-        ciKeys[1]=new ColumnInfo("Column name",  ColumnInfo.COLUMN_TYPE_TEXT, false); 
-//        ciKeys[2]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Default"),     ColumnInfo.COLUMN_TYPE_TEXT,   false); 
-        ciKeys[2]=new ColumnInfo("Data type", ColumnInfo.COLUMN_TYPE_CCOMBO, ValueMeta.getTypes()); 
-//        ciKeys[4]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Format"),      ColumnInfo.COLUMN_TYPE_FORMAT, 4);
-//        ciKeys[5]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Length"),      ColumnInfo.COLUMN_TYPE_TEXT,   false);
-//        ciKeys[6]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Precision"),   ColumnInfo.COLUMN_TYPE_TEXT,   false);
-//        ciKeys[7]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Currency"),    ColumnInfo.COLUMN_TYPE_TEXT,   false);
-//        ciKeys[8]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Decimal"),     ColumnInfo.COLUMN_TYPE_TEXT,   false);
-//        ciKeys[9]=new ColumnInfo(BaseMessages.getString(PKG, "VoldemortDialog.ColumnInfo.Group"),       ColumnInfo.COLUMN_TYPE_TEXT,   false);
-
-        fieldColumn = ciKeys[0];
+        ciKeys[0]=new ColumnInfo("Column name",  ColumnInfo.COLUMN_TYPE_TEXT, false); 
+        ciKeys[1]=new ColumnInfo("Data type", ColumnInfo.COLUMN_TYPE_CCOMBO, ValueMeta.getTypes()); 
 
         wKeys=new TableView(transMeta, shell, 
                 SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL, 
@@ -252,8 +231,8 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         };
 
         wStepname.addSelectionListener(lsDef);
-        wVoldemortHost.addSelectionListener(lsDef);
-        wVoldemortPort.addSelectionListener(lsDef);
+        wMarkLogicOdbcName.addSelectionListener(lsDef);
+        wMarkLogicViewName.addSelectionListener(lsDef);
 
         // Detect X or ALT-F4 or something that kills this window...
         shell.addShellListener(new ShellAdapter() {
@@ -271,7 +250,7 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
          *************************************************/
 
         getData();
-        setComboValues();
+        //setComboValues();
 
         input.setChanged(backupChanged);
 
@@ -289,28 +268,24 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         wStepname.selectAll();
 
         if (input.getMarklogicOdbcName() != null) {
-            wVoldemortHost.setText(input.getMarklogicOdbcName());   
+            wMarkLogicOdbcName.setText(input.getMarklogicOdbcName());   
         }
         if (input.getViewName() != null) {
-            wVoldemortPort.setText(input.getViewName());
+            wMarkLogicViewName.setText(input.getViewName());
         }
 
-        if (input.getKeyField()!=null){
+        if (input.getOutputField()!=null){
 
 
-            for (int i=0;i<input.getKeyField().length;i++){
+            for (int i=0;i<input.getOutputField().length;i++){
 
                 TableItem item = wKeys.table.getItem(i);
 
-                if (input.getKeyField()[i] != null){
-                    item.setText(1, input.getKeyField()[i]);
-                } 
-
                 if (input.getOutputField()[i] != null){
-                    item.setText(2, input.getOutputField()[i]);
+                    item.setText(1, input.getOutputField()[i]);
                 } 
 
-                item.setText(4, ValueMeta.getTypeDesc(input.getOutputType()[i]));
+                item.setText(2, ValueMeta.getTypeDesc(input.getOutputType()[i]));
 
             }
         }
@@ -318,26 +293,6 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         wKeys.setRowNums();
         wKeys.optWidth(true);       
     }
-
-    // asynchronous filling of the combo boxes
-    private void setComboValues() {
-        Runnable fieldLoader = new Runnable() {
-            public void run() {
-                try {
-                    prevFields = transMeta.getPrevStepFields(stepname);
-                } catch (KettleException e) {
-                    prevFields = new RowMeta();
-                    String msg = BaseMessages.getString(PKG, "VoldemortDialog.DoMapping.UnableToFindInput");
-                    logError(msg);
-                }
-                String[] prevStepFieldNames = prevFields.getFieldNames();
-                Arrays.sort(prevStepFieldNames);
-                fieldColumn.setComboValues(prevStepFieldNames);
-
-            }
-        };
-        new Thread(fieldLoader).start();
-    }   
 
     private void cancel() {
         stepname = null;
@@ -349,20 +304,17 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
     private void ok() {
         stepname = wStepname.getText(); // return value
 
-        input.setMarklogicOdbcName(wVoldemortHost.getText());
-        input.setViewName(wVoldemortPort.getText());
+        input.setMarklogicOdbcName(wMarkLogicOdbcName.getText());
+        input.setViewName(wMarkLogicViewName.getText());
 
         int nrKeys= wKeys.nrNonEmpty();
 
         input.allocate(nrKeys);
 
-        for (int i=0;i<nrKeys;i++)
-        {
+        for (int i=0;i<nrKeys;i++) {
             TableItem item = wKeys.getNonEmpty(i);
-            input.getKeyField()[i] = item.getText(1);
-            input.getOutputField()[i] = item.getText(2);
-
-            input.getOutputType()[i] = ValueMeta.getType(item.getText(4));
+            input.getOutputField()[i] = item.getText(1);
+            input.getOutputType()[i] = ValueMeta.getType(item.getText(2));
 
             // fix unknowns
             if (input.getOutputType()[i]<0){

@@ -3,22 +3,39 @@ package gov.boc.trade.plugin;
 import java.util.List;
 import java.util.Map;
 
-import org.dom4j.io.OutputFormat;
 import org.eclipse.swt.widgets.Shell;
-import org.pentaho.di.core.*;
-import org.pentaho.di.core.database.DatabaseMeta; 
-import org.pentaho.di.core.exception.*;
-import org.pentaho.di.core.row.*;
+import org.pentaho.di.core.CheckResultInterface;
+import org.pentaho.di.core.Const;
+import org.pentaho.di.core.Counter;
+import org.pentaho.di.core.database.DatabaseMeta;
+import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleValueException;
+import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.i18n.BaseMessages;
-import org.pentaho.di.repository.*;
-import org.pentaho.di.trans.*;
-import org.pentaho.di.trans.step.*;
+import org.pentaho.di.repository.ObjectId;
+import org.pentaho.di.repository.Repository;
+import org.pentaho.di.trans.Trans;
+import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.BaseStepMeta;
+import org.pentaho.di.trans.step.StepDataInterface;
+import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.trans.step.StepInterface;
+import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
 import com.jcabi.xml.XMLDocument;
 
+/**
+ * 
+ * @author Mark Martinez, created Feb 17, 2016
+ *
+ */
 public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     private static Class<?> PKG = LookupStepMeta.class; // for i18n purposes
@@ -26,7 +43,6 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     private String marklogicOdbcName;
     private String viewName;
-    private String keyField[];
     private String[] outputField;
     private int[] outputType;   
 
@@ -46,11 +62,11 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     // helper method to allocate the arrays
     public void allocate(int nrkeys){
-        keyField            = new String[nrkeys];
         outputField         = new String[nrkeys];
         outputType          = new int[nrkeys];
     }
 
+    @Override
     public void getFields(RowMetaInterface r, String origin, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space) {
         // append the outputFields to the output
         for (int i=0;i< outputField.length; i++) {
@@ -60,18 +76,18 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         }
     }
 
+    @Override
     public Object clone() {
 
         // field by field copy is default
         LookupStepMeta retval = (LookupStepMeta) super.clone();
 
         // add proper deep copy for the collections
-        int nrKeys   = keyField.length;
+        int nrKeys = outputField.length;
 
         retval.allocate(nrKeys);
 
         for (int i=0;i<nrKeys;i++) {
-            retval.keyField[i] = keyField[i];
             retval.outputField[i] = outputField[i];
             retval.outputType[i] = outputType[i];
         }
@@ -79,13 +95,13 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         return retval;
     }
 
+    @Override
     public String getXML() throws KettleValueException {
         StringBuffer retval = new StringBuffer(150);
         retval.append("    ").append(XMLHandler.addTagValue("marklogicOdbcName", marklogicOdbcName));
         retval.append("    ").append(XMLHandler.addTagValue("viewName", viewName));
-        for (int i=0;i<keyField.length;i++) {
+        for (int i=0;i<outputField.length;i++) {
             retval.append("      <lookup>").append(Const.CR);
-            retval.append("        ").append(XMLHandler.addTagValue("keyfield", keyField[i]));
             retval.append("        ").append(XMLHandler.addTagValue("outfield", outputField[i]));
             retval.append("        ").append(XMLHandler.addTagValue("type", ValueMeta.getTypeDesc(outputType[i])));
             retval.append("      </lookup>").append(Const.CR);
@@ -93,49 +109,45 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         return retval.toString();
     }
 
+    @Override
     public void loadXML(Node stepnode, List<DatabaseMeta> databases, Map<String, Counter> counters) throws KettleXMLException {
 
         String xml = new XMLDocument(stepnode).toString();
         System.out.println(xml);
 
         try {
-
             marklogicOdbcName = XMLHandler.getTagValue(stepnode, "marklogicOdbcName");
+            viewName = XMLHandler.getTagValue(stepnode, "viewName");
             int nrKeys = XMLHandler.countNodes(stepnode, "lookup"); 
             allocate(nrKeys);
 
-            for (int i=0;i<nrKeys;i++)
-            {
+            for (int i=0; i < nrKeys; i++) {
                 Node knode = XMLHandler.getSubNodeByNr(stepnode, "lookup", i);
 
-                keyField[i] 		= XMLHandler.getTagValue(knode, "keyfield"); 
-                outputField[i] 		= XMLHandler.getTagValue(knode, "outfield");
-                outputType[i] 		= ValueMeta.getType(XMLHandler.getTagValue(knode, "type"));
+                outputField[i] = XMLHandler.getTagValue(knode, "outfield");
+                outputType[i] = ValueMeta.getType(XMLHandler.getTagValue(knode, "type"));
 
                 if (outputType[i]<0){
                     outputType[i]=ValueMetaInterface.TYPE_STRING;
                 }
-
             }
 
         } catch (Exception e) {
             throw new KettleXMLException("Template Plugin Unable to read step info from XML node", e);
         }
 
-    }	
+    }
 
-
+    @Override
     public void readRep(Repository rep, ObjectId id_step, List<DatabaseMeta> databases, Map<String, Counter> counters) throws KettleException {
-        try
-        {
+        try {
             marklogicOdbcName = rep.getStepAttributeString(id_step, "marklogicOdbcName");
             viewName = rep.getStepAttributeString(id_step, "viewName");
 
-            int nrKeys   = rep.countNrStepAttributes(id_step, "lookup_keyfield");
+            int nrKeys   = rep.countNrStepAttributes(id_step, "lookup_outfield");
             allocate(nrKeys);
 
             for (int i=0;i<nrKeys;i++) {
-                keyField[i] = rep.getStepAttributeString (id_step, i, "lookup_keyfield");
                 outputField[i] = rep.getStepAttributeString (id_step, i, "lookup_outfield");
                 outputType[i] = ValueMeta.getType( rep.getStepAttributeString (id_step, i, "lookup_type") );
             }
@@ -145,13 +157,13 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         }
     }
 
+    @Override
     public void saveRep(Repository rep, ObjectId id_transformation, ObjectId id_step) throws KettleException {
         try {
             rep.saveStepAttribute(id_transformation, id_step, "marklogicOdbcName", marklogicOdbcName);
             rep.saveStepAttribute(id_transformation, id_step, "viewName", viewName);
 
-            for (int i=0;i<keyField.length;i++) {
-                rep.saveStepAttribute(id_transformation, id_step, i, "lookup_keyfield", keyField[i]);
+            for (int i=0;i<outputField.length;i++) {
                 rep.saveStepAttribute(id_transformation, id_step, i, "lookup_outfield", outputField[i]);
                 rep.saveStepAttribute(id_transformation, id_step, i, "lookup_type", ValueMeta.getTypeDesc(outputType[i]));
             }
@@ -161,8 +173,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         }
     }
 
-
-
+    @Override
     public void check(List<CheckResultInterface> remarks, TransMeta transmeta, StepMeta stepMeta, RowMetaInterface prev, String input[], String output[], RowMetaInterface info) {
         //Do nothing
     }
@@ -177,15 +188,6 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     public StepDataInterface getStepData() {
         return new LookupStepData();
-    }
-
-    // getters and setters for the step settings
-    public String[] getKeyField() {
-        return keyField;
-    }
-
-    public void setKeyField(String[] keyField) {
-        this.keyField = keyField;
     }
 
     public String[] getOutputField() {
