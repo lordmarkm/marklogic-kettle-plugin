@@ -51,6 +51,8 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
     private TextVar wMarkLogicUserName;
     private Label wlMarkLogicPassword;
     private TextVar wMarkLogicPassword;
+    private Label wlQualifier;
+    private TextVar wQualifier;
 
     // lookup fields settings widgets
     private Label wlKeys;
@@ -200,6 +202,25 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         fdPassword.right = new FormAttachment(100, 0);
         wMarkLogicPassword.setLayoutData(fdPassword);
 
+        //Query Qualifier
+        wlQualifier = new Label(gConnect, SWT.RIGHT);
+        wlQualifier.setText("Query qualifier"); 
+        props.setLook(wlQualifier);
+        FormData fdlQualifier = new FormData();
+        fdlQualifier.top = new FormAttachment(wMarkLogicPassword, margin);
+        fdlQualifier.left = new FormAttachment(0, 0);
+        fdlQualifier.right = new FormAttachment(middle, -margin);
+        wlQualifier.setLayoutData(fdlQualifier);
+        wQualifier = new TextVar(transMeta, gConnect, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+        wQualifier.addModifyListener(lsMod);
+        wQualifier.setToolTipText("ex: where date_created > {0} and agency_id = {1}"); 
+        props.setLook(wQualifier);
+        FormData fdQualifier = new FormData();
+        fdQualifier.top = new FormAttachment(wMarkLogicPassword, margin);
+        fdQualifier.left = new FormAttachment(middle, 0);
+        fdQualifier.right = new FormAttachment(100, 0);
+        wQualifier.setLayoutData(fdQualifier);
+
         FormData fdConnect = new FormData();
         fdConnect.left = new FormAttachment(0, 0);
         fdConnect.right = new FormAttachment(100, 0);
@@ -282,6 +303,7 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         wMarkLogicViewName.addSelectionListener(lsDef);
         wMarkLogicUserName.addSelectionListener(lsDef);
         wMarkLogicPassword.addSelectionListener(lsDef);
+        wQualifier.addSelectionListener(lsDef);
 
         // Detect X or ALT-F4 or something that kills this window...
         shell.addShellListener(new ShellAdapter() {
@@ -328,6 +350,9 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         if (input.getPassword() != null) {
             wMarkLogicPassword.setText(input.getPassword());
         }
+        if (input.getQualifier() != null) {
+            wQualifier.setText(input.getQualifier());
+        }
 
         if (input.getOutputField()!=null){
 
@@ -363,6 +388,7 @@ public class LookupStepDialog extends BaseStepDialog implements StepDialogInterf
         input.setViewName(wMarkLogicViewName.getText());
         input.setUsername(wMarkLogicUserName.getText());
         input.setPassword(wMarkLogicPassword.getText());
+        input.setQualifier(wQualifier.getText());
 
         int nrKeys= wKeys.nrNonEmpty();
 

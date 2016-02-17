@@ -3,6 +3,8 @@ package gov.boc.trade.plugin;
 import java.util.List;
 import java.util.Map;
 
+import javax.print.DocFlavor.STRING;
+
 import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
@@ -29,8 +31,6 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
-import com.jcabi.xml.XMLDocument;
-
 /**
  * 
  * @author Mark Martinez, created Feb 17, 2016
@@ -45,6 +45,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
     private String viewName;
     private String username;
     private String password;
+    private String qualifier;
     private String[] outputField;
     private int[] outputType;
 
@@ -59,6 +60,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         viewName = "import_items";
         username = "username";
         password = "password";
+        qualifier = "";
 
         // default is to have no key lookup settings
         allocate(0);
@@ -106,6 +108,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
         retval.append("    ").append(XMLHandler.addTagValue("viewName", viewName));
         retval.append("    ").append(XMLHandler.addTagValue("username", username));
         retval.append("    ").append(XMLHandler.addTagValue("password", password));
+        retval.append("    ").append(XMLHandler.addTagValue("qualifier", qualifier));
         for (int i=0;i<outputField.length;i++) {
             retval.append("      <lookup>").append(Const.CR);
             retval.append("        ").append(XMLHandler.addTagValue("outfield", outputField[i]));
@@ -118,14 +121,12 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
     @Override
     public void loadXML(Node stepnode, List<DatabaseMeta> databases, Map<String, Counter> counters) throws KettleXMLException {
 
-        String xml = new XMLDocument(stepnode).toString();
-        System.out.println(xml);
-
         try {
             marklogicOdbcName = XMLHandler.getTagValue(stepnode, "marklogicOdbcName");
             viewName = XMLHandler.getTagValue(stepnode, "viewName");
             username = XMLHandler.getTagValue(stepnode, "username");
             password = XMLHandler.getTagValue(stepnode, "password");
+            qualifier = XMLHandler.getTagValue(stepnode, "qualifier");
 
             int nrKeys = XMLHandler.countNodes(stepnode, "lookup"); 
             allocate(nrKeys);
@@ -154,6 +155,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
             viewName = rep.getStepAttributeString(id_step, "viewName");
             username = rep.getStepAttributeString(id_step, "username");
             password = rep.getStepAttributeString(id_step, "password");
+            qualifier = rep.getStepAttributeString(id_step, "qualifier");
 
             int nrKeys   = rep.countNrStepAttributes(id_step, "lookup_outfield");
             allocate(nrKeys);
@@ -175,6 +177,7 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
             rep.saveStepAttribute(id_transformation, id_step, "viewName", viewName);
             rep.saveStepAttribute(id_transformation, id_step, "username", username);
             rep.saveStepAttribute(id_transformation, id_step, "password", password);
+            rep.saveStepAttribute(id_transformation, id_step, "qualifier", qualifier);
 
             for (int i=0;i<outputField.length;i++) {
                 rep.saveStepAttribute(id_transformation, id_step, i, "lookup_outfield", outputField[i]);
@@ -249,6 +252,14 @@ public class LookupStepMeta extends BaseStepMeta implements StepMetaInterface {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getQualifier() {
+        return qualifier;
+    }
+
+    public void setQualifier(String qualifier) {
+        this.qualifier = qualifier;
     }
 
 }

@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.pentaho.di.core.exception.KettleException;
@@ -69,8 +71,9 @@ public class LookupStep extends BaseStep implements StepInterface {
             return false;
         }
 
+        System.out.println("Got data from previous steps: " + Arrays.asList(r));
         System.out.println("Getting data from marklogic");
-        getRows(meta, data);
+        getRows(r, meta, data);
 
         return true;
     }
@@ -92,10 +95,16 @@ public class LookupStep extends BaseStep implements StepInterface {
         return conn;
     }
 
-    private void getRows(LookupStepMeta meta, LookupStepData data) {
+    private void getRows(Object[] input, LookupStepMeta meta, LookupStepData data) {
         Connection con = data.marklogicOdbcConnection;
         Statement stmt = null;
         String query = "select * from " + meta.getViewName();
+
+        //Append formatted qualifier
+        if (meta.getQualifier() != null) {
+            query += (" " + MessageFormat.format(meta.getQualifier(), input));
+        }
+
         System.out.println("Executing query: " + query);
         try {
             stmt = con.createStatement();

@@ -43,11 +43,6 @@
 
   <repositories>
     <repository>
-      <id>dmc</id>
-      <name>MarkLogic Developer Community</name>
-      <url>http://developer.marklogic.com/maven2/</url>
-    </repository>
-    <repository>
       <id>pentaho-releases</id>
       <url>http://repository.pentaho.org/artifactory/repo/</url>
     </repository>
